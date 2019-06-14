@@ -16,6 +16,12 @@ app.config.suppress_callback_exceptions = True
 months = ['january', 'february', 'march', 'april', 'may']
 months_ru = ['Январь 2019', 'Февраль 2019', 'Март 2019', 'Апрель 2019', 'Май 2019']
 
+colors = {
+    0: ['rgb(2, 71, 254)', None],
+    1: ['rgb(254, 39, 18)', 'dash'],
+    2: ['rgb(101, 175, 50)', 'dashdot']
+}
+
 directory = 'files'
 dnames = []
 data = []
@@ -24,21 +30,21 @@ for file in os.listdir(directory):
     data.append(pd.read_excel(
         os.path.join(directory, file),
         skiprows=10,
-        usecols=list(range(1,9)),
-        names=['nom', 'art', 'code'] + months
+        # usecols=list(range(9)),
+        names=['nom', 'art', 'manuf', 'code'] + months
     ).fillna(0))
 
 select_data = pd.concat(data)
 unique_codes = select_data['code'].unique()
 select_data = select_data[select_data['code'].isin(unique_codes)]
-select_data['label'] = select_data.apply(lambda x: "{}, {} ({})".format(x['nom'], x['art'], x['code']), axis=1)
+select_data['label'] = select_data.apply(lambda x: "{}, {} ({}): {}".format(x['nom'], x['art'], x['code'], x['manuf']), axis=1)
 select_data['value'] = select_data['code']
 
 multiselect_options = select_data[['label', 'value']].to_dict('records')
 
 app.layout = html.Div([
     html.Div([html.H1("Графики заказов, реализаций, остатков")], style={'textAlign': 'center'}),
-    html.Div([dcc.Dropdown(id="selected-value", value="Ц1025556", options=multiselect_options)], className='row', style={"display": "block", "margin-left": "auto", "margin-right": "auto"}),
+    html.Div([dcc.Dropdown(id="selected-value", value="Ц1019105", options=multiselect_options)], className='row', style={"display": "block", "margin-left": "auto", "margin-right": "auto"}),
     html.Div([dcc.Graph(id="my-graph")], style={"height": "100%"}),
     # html.Div([dcc.RangeSlider])
 ], className="container-fluid")
@@ -46,19 +52,20 @@ app.layout = html.Div([
 
 def create_trace(code):
     local_trace = []
+    nomenclature = ''
     for i in range(len(dnames)):
         df = data[i][data[i]['code'].isin([code])]
-        nomenclature = "{}, {} ({})".format(df['nom'].values[0], df['art'].values[0], df['code'].values[0])
+        nomenclature = "{}, {} ({}): <b>{}</b>".format(df['nom'].values[0], df['art'].values[0], df['code'].values[0], df['manuf'].values[0])
         local_trace.append(go.Scatter(
             x=months_ru,
-            y=df.iloc[0, 3:],
+            y=df.iloc[0, 4:],
             name=dnames[i],
             mode='lines+markers',
-            opacity=0.6,
+            # opacity=0.6,
             line=dict(
-                # color=('rgb(205, 12, 24)'),
-                width=i,
-                dash='dash'
+                color=(colors[i][0]),
+                width=4-i,
+                dash=colors[i][1]
             )
         ))
     return local_trace, nomenclature
