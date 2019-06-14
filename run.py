@@ -29,7 +29,7 @@ for file in os.listdir(directory):
     dnames.append(file.split(' ')[1])
     data.append(pd.read_excel(
         os.path.join(directory, file),
-        skiprows=10,
+        skiprows=2,
         # usecols=list(range(9)),
         names=['nom', 'art', 'manuf', 'code'] + months
     ).fillna(0))
@@ -46,6 +46,13 @@ app.layout = html.Div([
     html.Div([html.H1("Графики заказов, реализаций, остатков")], style={'textAlign': 'center'}),
     html.Div([dcc.Dropdown(id="selected-value", value="Ц1019105", options=multiselect_options)], className='row', style={"display": "block", "margin-left": "auto", "margin-right": "auto"}),
     html.Div([dcc.Graph(id="my-graph")], style={"height": "100%"}),
+    html.Div([dcc.Upload(
+        id='upload-data',
+        children=html.Div([
+            "Перетащите файлы или ",
+            html.A('Выберите Файлы')
+        ])
+    )])
     # html.Div([dcc.RangeSlider])
 ], className="container-fluid")
 
